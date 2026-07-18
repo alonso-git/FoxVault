@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import IntEnum
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
@@ -26,3 +27,11 @@ class AccountDB(AccountCreate):
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
+
+class AccountUpdate(BaseModel):
+    id: Optional[UUID]
+    institution: Optional[str]
+    alias: Optional[str]
+    type: Optional[AccountType]
+class AccountStaticQuery(AccountUpdate):
+    is_active: Optional[bool]
