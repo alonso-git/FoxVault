@@ -1,4 +1,5 @@
 from enum import Enum
+import types
 from typing import Any, Union, get_args, get_origin
 from uuid import UUID
 
@@ -74,6 +75,7 @@ async def get_account_id_by_institution(institution: str, conn: PoolConnectionPr
     return result
     
 async def get_accounts(account_query: AccountStaticQuery, conn: PoolConnectionProxy) -> list[Record]:
+    print("PERO SI O PURA CACA")
     return await get_from_query_params(ExistentTables.ACCOUNTS, account_query, conn)
 
 async def get_transactions(transactions_query: TransactionStaticQuery, conn: PoolConnectionProxy) -> list[Record]:
@@ -85,32 +87,34 @@ async def get_from_query_params(table: ExistentTables, query_model: BaseModel, c
     if not clauses:
         return []
     else:
-        query = f"SELECT a.* FROM {table} AS a WHERE " + clauses + ";"
+        query = f"SELECT a.* FROM {table.value} AS a WHERE " + clauses + f" {active_clause()};"
+
+        print(f"{query=}")
 
         result: list[Record] = await conn.fetch(query, *variables)
 
         return result
 
-async def update_account(account: AccountUpdate, conn: PoolConnectionProxy) -> Record | None:
+async def update_account(account_id: UUID, account: AccountUpdate, conn: PoolConnectionProxy) -> Record | None:
     clauses, variables = build_clauses_and_variable_list(account, update=True)
 
     if not clauses:
         return None
     else:
-        variables.append(account.id)
-        query = "UPDATE Accounts SET " + clauses + f"WHERE id = ${len(variables)} {active_clause()} RETURNING id, institution, alias, type;"
+        variables.append(account_id)
+        query = "UPDATE Accounts SET " + clauses + f" WHERE id = ${len(variables)} {active_clause()} RETURNING id, institution, alias, type;"
 
         result: Record = await conn.fetchrow(query, *variables)
 
         return result
     
-async def update_transaction(transaction: TransactionUpdate, conn: PoolConnectionProxy) -> Record | None:
+async def update_transaction(transaction_id: UUID, transaction: TransactionUpdate, conn: PoolConnectionProxy) -> Record | None:
     clauses, variables = build_clauses_and_variable_list(transaction, update=True)
 
     if not clauses:
         return None
     else:
-        variables.append(transaction.id)
+        variables.append(transaction_id)
         query = "UPDATE Transactions SET " + clauses + f"WHERE id = ${len(variables)} {active_clause()} RETURNING id, description, category;"
 
         result: Record = await conn.fetchrow(query, *variables)
@@ -124,7 +128,7 @@ async def delete_transaction(transaction_id: UUID, conn: PoolConnectionProxy) ->
     return await delete_by_id(transaction_id, ExistentTables.TRANSACTIONS, conn)
 
 async def delete_by_id(row_id: UUID, table: ExistentTables, conn: PoolConnectionProxy) -> Record | None:
-    query = f"UPDATE {table} SET is_active = FALSE WHERE id = $1 RETURNING *;"
+    query = f"UPDATE {table.value} SET is_active = FALSE WHERE id = $1 RETURNING *;"
 
     return await conn.fetchrow(query, row_id)
 
@@ -157,16 +161,18 @@ def build_clauses_and_variable_list(optional_model: BaseModel, defined_variables
     variables: list = []
     count = defined_variables
 
-    for name, val in optional_model.model_dump(exclude={'' if include_id else 'id'}).items():
-        if val is not None:
-            # Extract field metadata from class level (any Pydantic model can be processed this way)
-            field_info = optional_model.__class__.model_fields[name]
+    for name, val in optional_model.model_dump(exclude={'' if include_id else 'id'}, exclude_unset=True).items():
+        # Extract field metadata from class level (any Pydantic model can be processed this way)
+        field_info = optional_model.__class__.model_fields[name]
 
-            # Make sure it is a "strictly typed nullable" where only a type and None are allowed
-            if is_nullable(field_info.annotation):
-                count += 1
-                clauses.append(f"{name} = ${count}")
-                variables.append(val)
+        print(f"{name=} {val=} {field_info.annotation}")
+
+        # Make sure it is a "strictly typed nullable" where only a type and None are allowed
+        if is_nullable(field_info.annotation):
+            print("ok")
+            count += 1
+            clauses.append(f"{name} = ${count}")
+            variables.append(val)
 
     return ((", " if update else " AND ").join(clauses), variables)
     
@@ -175,8 +181,9 @@ def is_nullable(type_ann: Any | None) -> bool:
     Accepted types:  
     Union[type, None],  Optional[type],  type | None
     """
-    if get_origin(type_ann) is Union:
+    origin = get_origin(type_ann)
+    if origin is Union or origin is getattr(types, "UnionType", None):
         args = get_args(type_ann)
-        return True if (None in args and len(args) == 2) else False
+        return type(None) in args and len(args) == 2
     else:
         return False

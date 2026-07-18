@@ -22,15 +22,12 @@ class TransactionDB(TransactionBase):
     account_id: UUID # FK
 
 class TransactionUpdate(BaseModel):
-    id: Optional[UUID]
-    description: Optional[str]
-    category: Optional[str]  
+    description: Optional[str] = None
+    category: Optional[str] = None
 
-class TransactionStaticQuery(BaseModel):
-    id: Optional[UUID]
-    is_active: Optional[bool]
-    origin_device: Optional[str]
-    origin_app: Optional[str]
-    description: Optional[str]
-    category: Optional[str]
+class TransactionStaticQuery(TransactionUpdate):
+    id: Optional[UUID] = None
+    is_active: Optional[bool] = None
+    origin_device: Optional[str] = None
+    origin_app: Optional[str] = None
     

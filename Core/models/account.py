@@ -29,9 +29,9 @@ class AccountDB(AccountCreate):
     model_config = ConfigDict(from_attributes=True)
 
 class AccountUpdate(BaseModel):
-    id: Optional[UUID]
-    institution: Optional[str]
-    alias: Optional[str]
-    type: Optional[AccountType]
+    institution: Optional[str] = None
+    alias: Optional[str] = None
+    type: Optional[AccountType] = None
 class AccountStaticQuery(AccountUpdate):
-    is_active: Optional[bool]
+    id: Optional[UUID] = None
+    is_active: Optional[bool] = None
