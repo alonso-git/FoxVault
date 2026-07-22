@@ -7,6 +7,19 @@ async def create_db(conn: PoolConnectionProxy):
     """
 
     query = """
+    CREATE TABLE AccountTypes (
+        id INT PRIMARY KEY,
+        type VARCHAR(20) NOT NULL
+    );
+
+    INSERT INTO AccountTypes (
+        id,
+        type
+    ) VALUES 
+    ( 1, 'DEBIT' ),
+    ( 2, 'CREDIT' ),
+    ( 3, 'INVEST' );
+
     CREATE TABLE Accounts (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -14,7 +27,7 @@ async def create_db(conn: PoolConnectionProxy):
         is_active BOOLEAN DEFAULT TRUE,
         institution VARCHAR(50) NOT NULL,
         alias VARCHAR(100),
-        type INT,
+        type INT REFERENCES AccountTypes(id) ON DELETE RESTRICT,
         balance NUMERIC(10, 2) DEFAULT 0.00
     );
 
@@ -24,10 +37,12 @@ async def create_db(conn: PoolConnectionProxy):
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         is_active BOOLEAN DEFAULT TRUE,
         origin_device VARCHAR(20) NOT NULL,
+        origin_app VARCHAR(50) NOT NULL,
         description VARCHAR(100) NOT NULL,
-        category VARCHAR(50) NOT NULL,
+        category VARCHAR(50),
         account_id UUID REFERENCES Accounts(id) ON DELETE CASCADE
     );
+
     """
 
     await conn.execute(query)
@@ -40,6 +55,7 @@ async def clear_db(conn: PoolConnectionProxy):
     query = """
     DROP TABLE IF EXISTS Transactions CASCADE;
     DROP TABLE IF EXISTS Accounts CASCADE;
+    DROP TABLE IF EXISTS AccountTypes CASCADE;
     """
 
     await conn.execute(query)
@@ -49,4 +65,4 @@ async def reset_db(conn: PoolConnectionProxy):
     await clear_db(conn)
     await create_db(conn)
 
-    print("DB reset (tables exist and are empty)")
+    print("DB reset (tables exist and are empty, catalogs are populated)")
