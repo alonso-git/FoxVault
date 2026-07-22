@@ -6,7 +6,7 @@ from asyncpg.pool import PoolConnectionProxy
 from models.account import AccountCreate, AccountStaticQuery, AccountUpdate
 from database import get_db_connection
 
-from services import db_admin, db_service
+from services import db_service
 
 # Le pasamos el administrador del ciclo de vida a FastAPI
 accounts = APIRouter(
@@ -15,7 +15,7 @@ accounts = APIRouter(
 )
 
 @accounts.post("/", status_code=status.HTTP_201_CREATED)
-async def create_database(account: AccountCreate, conn: PoolConnectionProxy = Depends(get_db_connection)):
+async def create_account(account: AccountCreate, conn: PoolConnectionProxy = Depends(get_db_connection)):
     result = await db_service.new_account(account, conn)
 
     if result:

@@ -14,24 +14,24 @@ db = Database()
 async def lifespan(app: FastAPI):
     db_url = settings.DB_URL
     if not db_url:
-        raise ValueError("FATAL: La variable DB_URL no está definida en el .env")
+        raise ValueError("FATAL: The variable DB_URL is not defined inside the .env")
     
     db.pool = await asyncpg.create_pool(db_url)
-    print("🟢 Plomería conectada: Pool de PostgreSQL listo y esperando queries.")
+    print("🟢 Plumbing connected: PostgreSQL pool ready and waiting for queries")
     
     yield # 👉 AQUÍ LA API VIVE Y RECIBE PETICIONES HTTP
     
     if db.pool:
         await db.pool.close()
-        print("🔴 Conexiones a PostgreSQL cerradas de forma segura.")
+        print("🔴 All PostgreSQL connections safely closed")
 
 async def get_db_connection() -> AsyncGenerator[PoolConnectionProxy, None]:
     """
-    Adquiere una conexión del pool y la inyecta en el endpoint.
-    Al terminar el endpoint, la conexión se libera automáticamente.
+    Acquire a pool connection and injects it in the endpoint
+    Once finished, the connection is automatically terminated
     """
     if db.pool is None:
-        raise RuntimeError("El pool de base de datos no está inicializado.")
+        raise RuntimeError("Database pool is not initialized")
     
     async with db.pool.acquire() as connection:
         yield connection

@@ -75,7 +75,6 @@ async def get_account_id_by_institution(institution: str, conn: PoolConnectionPr
     return result
     
 async def get_accounts(account_query: AccountStaticQuery, conn: PoolConnectionProxy) -> list[Record]:
-    print("PERO SI O PURA CACA")
     return await get_from_query_params(ExistentTables.ACCOUNTS, account_query, conn)
 
 async def get_transactions(transactions_query: TransactionStaticQuery, conn: PoolConnectionProxy) -> list[Record]:
@@ -88,8 +87,6 @@ async def get_from_query_params(table: ExistentTables, query_model: BaseModel, c
         return []
     else:
         query = f"SELECT a.* FROM {table.value} AS a WHERE " + clauses + f" {active_clause()};"
-
-        print(f"{query=}")
 
         result: list[Record] = await conn.fetch(query, *variables)
 
@@ -165,11 +162,8 @@ def build_clauses_and_variable_list(optional_model: BaseModel, defined_variables
         # Extract field metadata from class level (any Pydantic model can be processed this way)
         field_info = optional_model.__class__.model_fields[name]
 
-        print(f"{name=} {val=} {field_info.annotation}")
-
         # Make sure it is a "strictly typed nullable" where only a type and None are allowed
         if is_nullable(field_info.annotation):
-            print("ok")
             count += 1
             clauses.append(f"{name} = ${count}")
             variables.append(val)
