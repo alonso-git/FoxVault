@@ -8,3 +8,9 @@ services:
     volumes:
       - ./:/app:z
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - foxvault_network
+
+networks:
+  foxvault_network:
+    external: true
