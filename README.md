@@ -1,5 +1,5 @@
 
-# Project Title
+# FoxVault 🦊
 
 A personal app that transforms your phone into the center of an automated financial hub. For those who hate the traditional budgeting apps, and writing all your expenses by hand.
 
